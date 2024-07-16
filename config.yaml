@@ -1,0 +1,4 @@
+APP_BACKEND: "http://localhost:3000"
+APP_BACKEND_USER: "admin-changeme@valmi.io"
+APP_BACKEND_PASSWORD: "changeme"
+KAFKA_BROKER: "localhost:9094"
