@@ -1,0 +1,5 @@
+{
+    "go.lintOnSave": "file",
+    "go.lintTool": "golangci-lint",
+    "editor.formatOnSave": true
+}
