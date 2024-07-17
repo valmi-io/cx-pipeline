@@ -1,21 +1,45 @@
+/*
+ * Copyright (c) 2024 valmi.io <https://github.com/valmi-io>
+ *
+ * Created Date: Wednesday, July 17th 2024, 6:11:58 pm
+ * Author: Rajashekar Varkala @ valmi.io
+ */
+
 package main
 
 import (
-	"fmt"
+	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/spf13/viper"
+	"github.com/valmi-io/cx-pipeline/internal/configstore"
 	"github.com/valmi-io/cx-pipeline/internal/env"
-	"github.com/valmi-io/cx-pipeline/internal/log"
+	. "github.com/valmi-io/cx-pipeline/internal/log"
 )
 func main() {
-    // initialize config
+    // initialize environment & config variables
     env.InitConfig() 
-    fmt.Println(viper.Get("APP_BACKEND"))
-    fmt.Println(viper.Get("KAFKA_BROKER"))
+    Log.Info().Msg(viper.GetString("APP_BACKEND_URL"))
+    Log.Info().Msg(viper.GetString("KAFKA_BROKER"))
 
-    // initialize logging configuration 
-    log := log.GetLogger()
-    log.Debug().Msg("This message appears only when log level set to Debug")
-    log.Info().Msg("This message appears when log level set to Debug or Info")
+    // initialize ConfigStore
+    cs, err := configstore.Init()
+    if (err != nil){
+        Log.Fatal().Msg(err.Error())
+    }
 
+    cleanupChan := make(chan bool)
+
+    c := make(chan os.Signal, 1)
+    signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+    go func() {
+        <-c
+        cleanupChan <- true
+    }()
+
+    <- cleanupChan
+    Log.Info().Msg("Received an interrupt signal, shutting down...")
+    cs.Close() // close ConfigStore to stop refreshing IFTTTs
+    os.Exit(0)
 }
