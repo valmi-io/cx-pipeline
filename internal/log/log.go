@@ -1,3 +1,10 @@
+/*
+ * Copyright (c) 2024 valmi.io <https://github.com/valmi-io>
+ *
+ * Created Date: Wednesday, July 17th 2024, 6:11:58 pm
+ * Author: Rajashekar Varkala @ valmi.io
+ */
+
 package log
 
 import (
@@ -11,13 +18,15 @@ import (
 
 	"github.com/rs/zerolog"
 )
-var log *zerolog.Logger 
+var _log *zerolog.Logger 
+
+var Log = GetLogger()
 
 func GetLogger() *zerolog.Logger {
-	if log == nil{
-        log = getLoggerImpl()
+	if _log == nil{
+        _log = getLoggerImpl()
     }
-	return log
+	return _log
 }
 func getLoggerImpl() *zerolog.Logger {
 	debug := flag.Bool("debug", false, "sets log level to debug")
