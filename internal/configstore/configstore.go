@@ -21,12 +21,12 @@ type ConfigStore struct {
 
 func Init() (*ConfigStore, error) {
 	var wg sync.WaitGroup
-	channelTopics, error := initChannelTopics(&wg, 0)
+	channelTopics, error := initChannelTopics(&wg)
 	if error != nil {
 		return nil, error
 	}
 
-	storefrontIfttts, error := initStoreFrontIfttts(&wg, 1)
+	storefrontIfttts, error := initStoreFrontIfttts(&wg)
 	if error != nil {
 		return nil, error
 	}

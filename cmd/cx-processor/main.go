@@ -5,7 +5,7 @@
  * Author: Rajashekar Varkala @ valmi.io
  */
 
-package cxprocessor
+package main
 
 import (
 	"os"

@@ -53,17 +53,18 @@ type StorefrontIfttts struct {
 	done        chan bool
 }
 
-func initStoreFrontIfttts(wg *sync.WaitGroup, id int) (*StorefrontIfttts, error) {
+func initStoreFrontIfttts(wg *sync.WaitGroup) (*StorefrontIfttts, error) {
 	d, _ := time.ParseDuration(viper.GetString("CONFIG_REFRESH_INTERVAL"))
 	ticker := time.NewTicker(d)
 	storefrontIfttts := StorefrontIfttts{done: make(chan bool)}
 
-	wg.Add(id)
+	wg.Add(1)
 	go func() {
 		defer wg.Done()
 		for {
 			select {
 			case <-storefrontIfttts.done:
+				Log.Info().Msg("received done")
 				ticker.Stop()
 				return
 			case t := <-ticker.C:

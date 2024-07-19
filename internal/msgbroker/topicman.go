@@ -25,19 +25,28 @@ func (ps *ProcessorState) Close() error {
 }
 
 type TopicMan struct {
-	topicBookKeeping map[string]chan bool
-	topicsSubscribed atomic.Int64
-	allSubscriptions atomic.Uint64
-	wg               sync.WaitGroup
-	processorFunc    func(string)
+	bookKeepingWriteMutex sync.Mutex
+	topicBookKeeping      map[string]chan bool
+	topicsSubscribed      atomic.Int64
+	wg                    sync.WaitGroup
+	processorFunc         func(string)
 }
 
 func (tm *TopicMan) SubscribeTopic(topic string) {
-	tm.topicsSubscribed.Add(1)
-	tm.allSubscriptions.Add(1)
-	tm.topicBookKeeping[topic] = make(chan bool, 1)
+	_, exists := tm.topicBookKeeping[topic]
+	if exists {
+		Log.Warn().Msg("Topic already subscribed")
+		return
+	}
 
-	tm.wg.Add(int(tm.allSubscriptions.Load())) // Add to waitgroup
+	tm.topicsSubscribed.Add(1)
+
+	// Map in golang cannot concurrent writes, but reads can be concurrent
+	tm.bookKeepingWriteMutex.Lock()
+	tm.topicBookKeeping[topic] = make(chan bool, 1)
+	tm.bookKeepingWriteMutex.Unlock()
+
+	tm.wg.Add(1) // Add to waitgroup
 	go func() {
 		defer tm.wg.Done()
 
@@ -70,6 +79,10 @@ func (tm *TopicMan) SubscribeTopic(topic string) {
 		for run {
 			select {
 			case <-tm.topicBookKeeping[topic]:
+				tm.bookKeepingWriteMutex.Lock()
+				delete(tm.topicBookKeeping, topic)
+				tm.bookKeepingWriteMutex.Unlock()
+
 				Log.Info().Msg("End received. Stopping reading the topic!")
 				run = false
 			default:
@@ -105,7 +118,9 @@ func InitBroker(processorFunc func(string)) (*TopicMan, error) {
 }
 
 func (tm *TopicMan) Close() error {
+	Log.Info().Msg("Calling Close")
 	for topicK := range tm.topicBookKeeping {
+		Log.Info().Msg("sendong close")
 		tm.topicBookKeeping[topicK] <- true // Send Done to Topic Readers
 	}
 

@@ -1,4 +1,4 @@
-package cxprocessor
+package main
 
 import (
 	. "github.com/valmi-io/cx-pipeline/internal/log"
