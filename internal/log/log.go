@@ -48,7 +48,7 @@ func getLoggerImpl() *zerolog.Logger {
 		return strings.ToUpper(fmt.Sprintf("| %-6s|", i))
 	}
 	output.FormatMessage = func(i interface{}) string {
-		return fmt.Sprintf("***%s****", i)
+		return fmt.Sprintf("%s", i)
 	}
 	output.FormatFieldName = func(i interface{}) string {
 		return fmt.Sprintf("%s:", i)
