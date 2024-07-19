@@ -5,7 +5,7 @@
  * Author: Rajashekar Varkala @ valmi.io
  */
 
-package main
+package cxprocessor
 
 import (
 	"os"
@@ -16,30 +16,42 @@ import (
 	"github.com/valmi-io/cx-pipeline/internal/configstore"
 	"github.com/valmi-io/cx-pipeline/internal/env"
 	. "github.com/valmi-io/cx-pipeline/internal/log"
+	. "github.com/valmi-io/cx-pipeline/internal/msgbroker"
 )
+
 func main() {
-    // initialize environment & config variables
-    env.InitConfig() 
-    Log.Info().Msg(viper.GetString("APP_BACKEND_URL"))
-    Log.Info().Msg(viper.GetString("KAFKA_BROKER"))
+	// initialize environment & config variables
+	env.InitConfig()
+	Log.Info().Msg(viper.GetString("APP_BACKEND_URL"))
+	Log.Info().Msg(viper.GetString("KAFKA_BROKER"))
 
-    // initialize ConfigStore
-    cs, err := configstore.Init()
-    if (err != nil){
-        Log.Fatal().Msg(err.Error())
-    }
+	// initialize ConfigStore
+	cs, err := configstore.Init()
+	if err != nil {
+		Log.Fatal().Msg(err.Error())
+	}
 
-    cleanupChan := make(chan bool)
+	// initialize Broker
+	topicMan, err := InitBroker(processor)
+	if err != nil {
+		Log.Fatal().Msg(err.Error())
+	}
 
-    c := make(chan os.Signal, 1)
-    signal.Notify(c, os.Interrupt, syscall.SIGTERM)
-    go func() {
-        <-c
-        cleanupChan <- true
-    }()
+	// Connect ConfigStore and Broker
+	cs.AttachTopicMan(topicMan)
 
-    <- cleanupChan
-    Log.Info().Msg("Received an interrupt signal, shutting down...")
-    cs.Close() // close ConfigStore to stop refreshing IFTTTs
-    os.Exit(0)
+	cleanupChan := make(chan bool)
+
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+	go func() {
+		<-c
+		cleanupChan <- true
+	}()
+
+	<-cleanupChan
+	Log.Info().Msg("Received an interrupt signal, shutting down...")
+	cs.Close()       // close ConfigStore to stop refreshing IFTTTs
+	topicMan.Close() // close broker topic management
+
 }

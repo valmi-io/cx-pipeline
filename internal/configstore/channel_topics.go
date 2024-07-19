@@ -2,6 +2,7 @@ package configstore
 
 import (
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/spf13/viper"
@@ -12,91 +13,103 @@ import (
 
 func fetchChannelTopics() (string, error) {
 	data, respCode, err := util.PostUrl(
-		viper.GetString("APP_BACKEND_URL") + "/api/v1/superuser/channeltopics", 
+		viper.GetString("APP_BACKEND_URL")+"/api/v1/superuser/channeltopics",
 		[]byte("{\"channel_in\": [\"x\",\"y\"], \"channel_not_in\": [\"x\",\"y\"]}"),
 		util.SetConfigAuth)
 
 	Log.Info().Msg(data)
 	Log.Info().Msgf("%v", respCode)
-	if err!= nil {
+	if err != nil {
 		Log.Info().Msg(err.Error())
-    }
+	}
 	return data, err
 
-	// PARSE the response and store it in the ChannelTopics struct 
+	// PARSE the response and store it in the ChannelTopics struct
 	// Pass to matchChannelState
 	// if success, switch to NewChannelTopics
 }
+
 type ChannelTopic struct {
-	LinkID string    `json:"link_id"`
-	WriteKey   string `json:"write_key"`
-	storeID string
-	channel string
+	LinkID   string `json:"link_id"`
+	WriteKey string `json:"write_key"`
+	storeID  string
+	channel  string
 }
 
 type ChannelTopics struct {
-	Channels []ChannelTopic;
-	done chan bool
+	Channels []ChannelTopic
+	done     chan bool
+	topicMan *TopicMan
 }
 
-func (t *ChannelTopic) constructTopic() string{
+func (t *ChannelTopic) constructTopic() string {
 	return fmt.Sprintf("in.%v", t.LinkID)
 }
 
 func matchChannelState(newCT *ChannelTopics, currentCT *ChannelTopics) bool {
+	if currentCT.topicMan == nil {
+		return false
+	}
+
 	if newCT == nil || newCT.Channels == nil {
 		Log.Info().Msg("New Channel Topics is either empty or null")
-	} else{
+	} else {
 		Log.Info().Msg("Subscribing to new Channels")
-		for _, nt  := range newCT.Channels {
+		for _, nt := range newCT.Channels {
 			if currentCT != nil && currentCT.Channels != nil {
-				for _,ct := range currentCT.Channels {
+				for _, ct := range currentCT.Channels {
 					if ct.LinkID == nt.LinkID {
 						break // already subscribed
 					}
 				}
 			}
-			SubscribeTopic(nt.constructTopic()) // subscribe
+			currentCT.topicMan.SubscribeTopic(nt.constructTopic()) // subscribe
 		}
 	}
-	
+
 	if currentCT == nil || currentCT.Channels == nil {
 		Log.Info().Msg("Current Channel Topics is either empty or null")
-	} else{
+	} else {
 		Log.Info().Msg("Unsubscribing from old Channels")
-        for _,ct := range currentCT.Channels {
-            if newCT!= nil && newCT.Channels!= nil {
-                for _,nt := range newCT.Channels {
-                    if ct.LinkID == nt.LinkID {
-                        break // already unsubscribed
-                    }
-                }
-            }
-            UnsubscribeTopic(ct.constructTopic()) // unsubscribe
-        }
+		for _, ct := range currentCT.Channels {
+			if newCT != nil && newCT.Channels != nil {
+				for _, nt := range newCT.Channels {
+					if ct.LinkID == nt.LinkID {
+						break // already unsubscribed
+					}
+				}
+			}
+			currentCT.topicMan.UnsubscribeTopic(ct.constructTopic()) // unsubscribe
+		}
 	}
 	return true
 }
 
-func initChannelTopics() (*ChannelTopics, error) {
-	d,_:= time.ParseDuration(viper.GetString("CONFIG_REFRESH_INTERVAL"))
+func initChannelTopics(wg *sync.WaitGroup, id int) (*ChannelTopics, error) {
+	d, _ := time.ParseDuration(viper.GetString("CONFIG_REFRESH_INTERVAL"))
 	ticker := time.NewTicker(d)
 	channelTopics := ChannelTopics{done: make(chan bool)}
+
+	wg.Add(id)
 	go func() {
+		defer wg.Done()
 		for {
-            select {
-            case <- channelTopics.done:
-                return
-            case t := <-ticker.C:
+			select {
+			case <-channelTopics.done:
+				return
+			case t := <-ticker.C:
 				Log.Debug().Msgf("ChannelTopics Refresh Tick at %v", t)
 				fetchChannelTopics()
-            }
-        }
+			}
+		}
 	}()
 	return &channelTopics, nil
 }
 
-func (ct *ChannelTopics) Close(){
-	ct.done <- true
+func (ct *ChannelTopics) AttachTopicMan(tm *TopicMan) {
+	ct.topicMan = tm
 }
 
+func (ct *ChannelTopics) Close() {
+	ct.done <- true
+}

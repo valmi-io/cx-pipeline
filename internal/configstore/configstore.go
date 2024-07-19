@@ -7,29 +7,43 @@
 
 package configstore
 
+import (
+	"sync"
+
+	. "github.com/valmi-io/cx-pipeline/internal/msgbroker"
+)
+
 type ConfigStore struct {
-	channelTopics *ChannelTopics
+	channelTopics    *ChannelTopics
 	storefrontIfttts *StorefrontIfttts
+	wg               *sync.WaitGroup
 }
 
 func Init() (*ConfigStore, error) {
-	channelTopics, error := initChannelTopics()
-	if error!= nil {
-        return nil, error
-    }
+	var wg sync.WaitGroup
+	channelTopics, error := initChannelTopics(&wg, 0)
+	if error != nil {
+		return nil, error
+	}
 
-	storefrontIfttts, error := initStoreFrontIfttts()
-	if error!= nil {
-        return nil, error
-    }
+	storefrontIfttts, error := initStoreFrontIfttts(&wg, 1)
+	if error != nil {
+		return nil, error
+	}
 
 	return &ConfigStore{
-        channelTopics: channelTopics,
+		channelTopics:    channelTopics,
 		storefrontIfttts: storefrontIfttts,
-    }, nil
+		wg:               &wg,
+	}, nil
 }
 
-func (cs *ConfigStore) Close(){
+func (cs *ConfigStore) AttachTopicMan(tm *TopicMan) {
+	cs.channelTopics.topicMan = tm
+}
+
+func (cs *ConfigStore) Close() {
 	cs.channelTopics.Close()
-    cs.storefrontIfttts.Close()
+	cs.storefrontIfttts.Close()
+	cs.wg.Wait()
 }

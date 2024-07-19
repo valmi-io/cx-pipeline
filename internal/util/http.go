@@ -16,39 +16,37 @@ import (
 	"github.com/spf13/viper"
 	. "github.com/valmi-io/cx-pipeline/internal/log"
 )
- 
 
-
-func SetConfigAuth(req *http.Request){
+func SetConfigAuth(req *http.Request) {
 	req.SetBasicAuth(viper.GetString("APP_BACKEND_USER"), viper.GetString("APP_BACKEND_PASSWORD"))
 }
 
 func GetUrl(url string, setAuth func(*http.Request)) (string, int, error) {
 	client := http.Client{Timeout: 5 * time.Second}
 
-    req, err := http.NewRequest(http.MethodGet, url, http.NoBody)
-    if err != nil {
-        Log.Error().Msg(err.Error())
+	req, err := http.NewRequest(http.MethodGet, url, http.NoBody)
+	if err != nil {
+		Log.Error().Msg(err.Error())
 		return "", -1, err
 
-    }
-    if setAuth!= nil {
-        setAuth(req)
-    }
+	}
+	if setAuth != nil {
+		setAuth(req)
+	}
 
 	resp, err := client.Do(req)
-    if err != nil {
-        panic(err)
-    }
-    defer resp.Body.Close() 
+	if err != nil {
+		panic(err)
+	}
+	defer resp.Body.Close()
 
-    Log.Info().Msgf("Response status: %v", resp.Status) 
+	Log.Info().Msgf("Response status: %v", resp.Status)
 
-    resBody, err := io.ReadAll(resp.Body)
-    if err != nil {
-        Log.Error().Msg(err.Error())
+	resBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		Log.Error().Msg(err.Error())
 		return "", resp.StatusCode, err
-    }
+	}
 	return string(resBody), resp.StatusCode, nil
 
 }
@@ -56,29 +54,29 @@ func GetUrl(url string, setAuth func(*http.Request)) (string, int, error) {
 func PostUrl(url string, body []byte, setAuth func(*http.Request)) (string, int, error) {
 	client := http.Client{Timeout: 5 * time.Second}
 
-    req, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(body))
-    if err != nil {
-        Log.Error().Msg(err.Error())
+	req, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(body))
+	if err != nil {
+		Log.Error().Msg(err.Error())
 		return "", -1, err
 
-    }
-    if setAuth!= nil {
-        setAuth(req)
-    }
+	}
+	if setAuth != nil {
+		setAuth(req)
+	}
 
 	resp, err := client.Do(req)
-    if err != nil {
-        panic(err)
-    }
-    defer resp.Body.Close() 
+	if err != nil {
+		panic(err)
+	}
+	defer resp.Body.Close()
 
-    Log.Info().Msgf("Response status: %v", resp.Status) 
+	Log.Info().Msgf("Response status: %v", resp.Status)
 
-    resBody, err := io.ReadAll(resp.Body)
-    if err != nil {
-        Log.Error().Msg(err.Error())
+	resBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		Log.Error().Msg(err.Error())
 		return "", resp.StatusCode, err
-    }
+	}
 	return string(resBody), resp.StatusCode, nil
 
 }

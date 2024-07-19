@@ -18,25 +18,26 @@ import (
 
 	"github.com/rs/zerolog"
 )
-var _log *zerolog.Logger 
+
+var _log *zerolog.Logger
 
 var Log = GetLogger()
 
 func GetLogger() *zerolog.Logger {
-	if _log == nil{
-        _log = getLoggerImpl()
-    }
+	if _log == nil {
+		_log = getLoggerImpl()
+	}
 	return _log
 }
 func getLoggerImpl() *zerolog.Logger {
 	debug := flag.Bool("debug", false, "sets log level to debug")
 
-    flag.Parse()
+	flag.Parse()
 
 	zerolog.SetGlobalLevel(zerolog.InfoLevel)
-    if *debug {
-        zerolog.SetGlobalLevel(zerolog.DebugLevel)
-    }
+	if *debug {
+		zerolog.SetGlobalLevel(zerolog.DebugLevel)
+	}
 
 	// Short file name
 	zerolog.CallerMarshalFunc = func(pc uintptr, file string, line int) string {

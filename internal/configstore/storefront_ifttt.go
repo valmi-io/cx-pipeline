@@ -8,6 +8,7 @@
 package configstore
 
 import (
+	"sync"
 	"time"
 
 	"github.com/spf13/viper"
@@ -16,12 +17,12 @@ import (
 )
 
 func fetchIfttts() (string, error) {
-	data, respCode, err := util.GetUrl(viper.GetString("APP_BACKEND_URL") + "/api/v1/superuser/ifttts", util.SetConfigAuth)
+	data, respCode, err := util.GetUrl(viper.GetString("APP_BACKEND_URL")+"/api/v1/superuser/ifttts", util.SetConfigAuth)
 	Log.Info().Msg(data)
 	Log.Info().Msgf("%v", respCode)
-	if err!= nil {
+	if err != nil {
 		Log.Info().Msg(err.Error())
-    }
+	}
 	return data, err
 
 	// PARSE the response and store it in the StorefrontIftts struct
@@ -29,32 +30,33 @@ func fetchIfttts() (string, error) {
 
 type StorefrontIfttts struct {
 	StoreIfttt []struct {
-        StoreID int    `json:"store_id"`
-        Code   string `json:"code"`
-    }
+		StoreID int    `json:"store_id"`
+		Code    string `json:"code"`
+	}
 	done chan bool
 }
 
-func initStoreFrontIfttts() (*StorefrontIfttts, error) {
-	d,_:= time.ParseDuration(viper.GetString("CONFIG_REFRESH_INTERVAL"))
+func initStoreFrontIfttts(wg *sync.WaitGroup, id int) (*StorefrontIfttts, error) {
+	d, _ := time.ParseDuration(viper.GetString("CONFIG_REFRESH_INTERVAL"))
 	ticker := time.NewTicker(d)
 	storefrontIfttts := StorefrontIfttts{done: make(chan bool)}
+
+	wg.Add(id)
 	go func() {
+		defer wg.Done()
 		for {
-            select {
-            case <- storefrontIfttts.done:
-                return
-            case t := <-ticker.C:
+			select {
+			case <-storefrontIfttts.done:
+				return
+			case t := <-ticker.C:
 				Log.Debug().Msgf("StorefrontIfttts Refresh Tick at %v", t)
 				fetchIfttts()
-            }
-        }
+			}
+		}
 	}()
 	return &storefrontIfttts, nil
 }
 
-func (si *StorefrontIfttts) Close(){
+func (si *StorefrontIfttts) Close() {
 	si.done <- true
 }
-
-
