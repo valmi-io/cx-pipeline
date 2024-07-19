@@ -10,20 +10,6 @@ import (
 	. "github.com/valmi-io/cx-pipeline/internal/log"
 )
 
-type ProcessorState struct {
-	Msgs chan string
-	Done chan bool
-	Wg   sync.WaitGroup
-}
-
-func (ps *ProcessorState) Close() error {
-	for range viper.GetInt("NUM_PROCESSORS") {
-		ps.Done <- true
-	}
-	ps.Wg.Wait()
-	return nil
-}
-
 type TopicMan struct {
 	bookKeepingWriteMutex sync.Mutex
 	topicBookKeeping      map[string]chan bool
