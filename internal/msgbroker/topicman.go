@@ -19,7 +19,10 @@ type TopicMan struct {
 }
 
 func (tm *TopicMan) SubscribeTopic(topic string) {
+	tm.bookKeepingWriteMutex.Lock()
 	_, exists := tm.topicBookKeeping[topic]
+	tm.bookKeepingWriteMutex.Unlock()
+
 	if exists {
 		Log.Warn().Msg("Topic already subscribed")
 		return
@@ -63,8 +66,12 @@ func (tm *TopicMan) SubscribeTopic(topic string) {
 		// Read messages
 		run := true
 		for run {
+			tm.bookKeepingWriteMutex.Lock()
+			channel := tm.topicBookKeeping[topic]
+			tm.bookKeepingWriteMutex.Unlock()
+
 			select {
-			case <-tm.topicBookKeeping[topic]:
+			case <-channel:
 				tm.bookKeepingWriteMutex.Lock()
 				delete(tm.topicBookKeeping, topic)
 				tm.bookKeepingWriteMutex.Unlock()
@@ -89,7 +96,9 @@ func (tm *TopicMan) UnsubscribeTopic(topic string) {
 	tm.topicsSubscribed.Add(-1)
 
 	Log.Info().Msgf("Unsubscribing from topic %v", topic)
+	tm.bookKeepingWriteMutex.Lock()
 	tm.topicBookKeeping[topic] <- true
+	tm.bookKeepingWriteMutex.Unlock()
 
 	// Panic if any failure is encountered
 	if false {
@@ -104,11 +113,12 @@ func InitBroker(processorFunc func(string)) (*TopicMan, error) {
 }
 
 func (tm *TopicMan) Close() error {
-	Log.Info().Msg("Calling Close")
+
+	tm.bookKeepingWriteMutex.Lock()
 	for topicK := range tm.topicBookKeeping {
-		Log.Info().Msg("sendong close")
 		tm.topicBookKeeping[topicK] <- true // Send Done to Topic Readers
 	}
+	tm.bookKeepingWriteMutex.Unlock()
 
 	tm.wg.Wait()
 	return nil
