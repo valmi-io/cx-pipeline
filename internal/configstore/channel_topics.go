@@ -75,7 +75,7 @@ func matchChannelState(newCT *ChannelTopics, currentCT *ChannelTopics) bool {
 			if newCT != nil && newCT.Channels != nil {
 				for _, nt := range newCT.Channels {
 					if ct.LinkID == nt.LinkID {
-						break // already unsubscribed
+						break // nothing changed
 					}
 				}
 			}

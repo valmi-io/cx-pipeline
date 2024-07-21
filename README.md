@@ -1,5 +1,5 @@
 # cx-pipeline
 
 Basic test
-go build cmd/cx-processor/main.go ; ./main
-~/dotenv/dotenv -e .env ./main
+ go build -o main cmd/cx-processor/*.go ;
+ ~/dotenv/dotenv -e .env ./main --debug
