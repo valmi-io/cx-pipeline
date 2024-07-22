@@ -56,14 +56,18 @@ func matchChannelState(newCT *ChannelTopics, currentCT *ChannelTopics) bool {
 	} else {
 		Log.Info().Msg("Subscribing to new Channels")
 		for _, nt := range newCT.Channels {
+			subscribe := true
 			if currentCT != nil && currentCT.Channels != nil {
 				for _, ct := range currentCT.Channels {
 					if ct.LinkID == nt.LinkID {
+						subscribe = false
 						break // already subscribed
 					}
 				}
 			}
-			currentCT.topicMan.SubscribeTopic(nt.constructTopic()) // subscribe
+			if subscribe {
+				currentCT.topicMan.SubscribeTopic(nt.constructTopic()) // subscribe
+			}
 		}
 	}
 
@@ -72,14 +76,18 @@ func matchChannelState(newCT *ChannelTopics, currentCT *ChannelTopics) bool {
 	} else {
 		Log.Info().Msg("Unsubscribing from old Channels")
 		for _, ct := range currentCT.Channels {
+			unsubscribe := true
 			if newCT != nil && newCT.Channels != nil {
 				for _, nt := range newCT.Channels {
 					if ct.LinkID == nt.LinkID {
+						unsubscribe = false
 						break // nothing changed
 					}
 				}
 			}
-			currentCT.topicMan.UnsubscribeTopic(ct.constructTopic()) // unsubscribe
+			if unsubscribe {
+				currentCT.topicMan.UnsubscribeTopic(ct.constructTopic()) // unsubscribe
+			}
 		}
 	}
 	return true
