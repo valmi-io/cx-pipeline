@@ -26,10 +26,9 @@ func fetchIfttts() (StorefrontIfttts, error) {
 	}
 
 	var storeIfttts []StoreIfttt
-	unmarshallErr := json.Unmarshal([]byte(data), &storeIfttts)
-	if unmarshallErr != nil {
+	if unmarshallErr := json.Unmarshal([]byte(data), &storeIfttts); unmarshallErr != nil {
 		Log.Error().Msgf("Error Unmarshalling JSON: %v", unmarshallErr)
-		return StorefrontIfttts{}, unmarshallErr
+		return StorefrontIfttts{done: make(chan bool)}, unmarshallErr
 	}
 
 	return StorefrontIfttts{done: make(chan bool), StoreIfttts: storeIfttts}, nil
