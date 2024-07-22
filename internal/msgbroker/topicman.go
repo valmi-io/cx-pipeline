@@ -11,7 +11,7 @@ import (
 )
 
 type TopicMan struct {
-	bookKeepingWriteMutex sync.Mutex
+	bookKeepingWriteMutex sync.RWMutex
 	topicBookKeeping      map[string]chan bool
 	topicsSubscribed      atomic.Int64
 	wg                    sync.WaitGroup
@@ -19,9 +19,9 @@ type TopicMan struct {
 }
 
 func (tm *TopicMan) SubscribeTopic(topic string) {
-	tm.bookKeepingWriteMutex.Lock()
+	tm.bookKeepingWriteMutex.RLock()
 	_, exists := tm.topicBookKeeping[topic]
-	tm.bookKeepingWriteMutex.Unlock()
+	tm.bookKeepingWriteMutex.RUnlock()
 
 	if exists {
 		Log.Warn().Msg("Topic already subscribed")
