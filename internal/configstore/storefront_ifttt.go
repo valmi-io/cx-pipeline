@@ -25,22 +25,14 @@ func fetchIfttts() (StorefrontIfttts, error) {
 		Log.Info().Msg(err.Error())
 	}
 
-	var result []map[string]string
-	unmarshallErr := json.Unmarshal([]byte(data), &result)
+	var storeIfttts []StoreIfttt
+	unmarshallErr := json.Unmarshal([]byte(data), &storeIfttts)
 	if unmarshallErr != nil {
 		Log.Error().Msgf("Error Unmarshalling JSON: %v", unmarshallErr)
+		return StorefrontIfttts{}, unmarshallErr
 	}
 
-	storefrontIftttsInfo := StorefrontIfttts{done: make(chan bool)}
-	for _, item := range result {
-		storeIftttInfo := StoreIfttt{
-			StoreID: item["store_id"],
-			Code:    item["code"],
-		}
-		storefrontIftttsInfo.StoreIfttts = append(storefrontIftttsInfo.StoreIfttts, storeIftttInfo)
-	}
-
-	return storefrontIftttsInfo, nil
+	return StorefrontIfttts{done: make(chan bool), StoreIfttts: storeIfttts}, nil
 }
 
 type StoreIfttt struct {
