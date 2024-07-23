@@ -47,3 +47,10 @@ func (cs *ConfigStore) Close() {
 	cs.storefrontIfttts.Close()
 	cs.wg.Wait()
 }
+
+func (cs *ConfigStore) GetStoreIfttts(storefrontID string) []StoreIfttt {
+	cs.storefrontIfttts.mu.RLock()
+	ifttts := cs.storefrontIfttts.StoreIfttts
+	cs.storefrontIfttts.mu.RUnlock()
+	return ifttts
+}
