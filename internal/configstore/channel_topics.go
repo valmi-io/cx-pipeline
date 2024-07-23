@@ -26,7 +26,7 @@ type ChannelTopics struct {
 	topicMan *TopicMan
 }
 
-func fetchChannelTopics(currentCT *ChannelTopics) (*ChannelTopics, error) {
+func fetchChannelTopics(currentCT *ChannelTopics) []ChannelTopic {
 	jsonPayload := `{"channel_in": ["chatbox"], "channel_not_in": ["x", "y"]}`
 	data, respCode, err := util.PostUrl(
 		viper.GetString("APP_BACKEND_URL")+"/api/v1/superuser/channeltopics",
@@ -46,13 +46,10 @@ func fetchChannelTopics(currentCT *ChannelTopics) (*ChannelTopics, error) {
 
 	// Pass to matchChannelState
 	if status := matchChannelState(channelTopics, currentCT.Channels, currentCT.topicMan); status {
-		currentCT.mu.RLock()
-		currentCT.Channels = channelTopics
-		currentCT.mu.RUnlock()
-		return currentCT, nil
+		return channelTopics
 	}
 	// if success, switch to NewChannelTopics
-	return currentCT, err
+	return currentCT.Channels
 }
 
 func (t *ChannelTopic) constructTopic() string {
@@ -105,7 +102,10 @@ func initChannelTopics(wg *sync.WaitGroup) (*ChannelTopics, error) {
 				return
 			case t := <-ticker.C:
 				Log.Debug().Msgf("ChannelTopics Refresh Tick at %v", t)
-				channelTopics, _ = fetchChannelTopics(channelTopics)
+				newChannels := fetchChannelTopics(channelTopics)
+				channelTopics.mu.RLock()
+				channelTopics.Channels = newChannels
+				channelTopics.mu.RUnlock()
 				Log.Debug().Msgf("ChannelTopics Refresh Tick at %+v", channelTopics)
 				//testing
 				// top := "in.id.clyszkfc70002zpa9ooq25gq1-5lef-ldkv-sP2mEg.m.batch.t.events"
