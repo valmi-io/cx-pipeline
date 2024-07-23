@@ -17,7 +17,7 @@ import (
 	util "github.com/valmi-io/cx-pipeline/internal/util"
 )
 
-func fetchIfttts() (StorefrontIfttts, error) {
+func fetchIfttts() ([]StoreIfttt, error) {
 	data, respCode, err := util.GetUrl(viper.GetString("APP_BACKEND_URL")+"/api/v1/superuser/ifttts", util.SetConfigAuth)
 	Log.Info().Msg(data)
 	Log.Info().Msgf("%v", respCode)
@@ -25,22 +25,12 @@ func fetchIfttts() (StorefrontIfttts, error) {
 		Log.Info().Msg(err.Error())
 	}
 
-	var result []map[string]string
-	unmarshallErr := json.Unmarshal([]byte(data), &result)
-	if unmarshallErr != nil {
+	var storeIfttts []StoreIfttt
+	if unmarshallErr := json.Unmarshal([]byte(data), &storeIfttts); unmarshallErr != nil {
 		Log.Error().Msgf("Error Unmarshalling JSON: %v", unmarshallErr)
 	}
 
-	storefrontIftttsInfo := StorefrontIfttts{done: make(chan bool)}
-	for _, item := range result {
-		storeIftttInfo := StoreIfttt{
-			StoreID: item["store_id"],
-			Code:    item["code"],
-		}
-		storefrontIftttsInfo.StoreIfttts = append(storefrontIftttsInfo.StoreIfttts, storeIftttInfo)
-	}
-
-	return storefrontIftttsInfo, nil
+	return storeIfttts, nil
 }
 
 type StoreIfttt struct {
@@ -49,6 +39,7 @@ type StoreIfttt struct {
 }
 
 type StorefrontIfttts struct {
+	mu          sync.RWMutex
 	StoreIfttts []StoreIfttt
 	done        chan bool
 }
@@ -56,7 +47,7 @@ type StorefrontIfttts struct {
 func initStoreFrontIfttts(wg *sync.WaitGroup) (*StorefrontIfttts, error) {
 	d, _ := time.ParseDuration(viper.GetString("CONFIG_REFRESH_INTERVAL"))
 	ticker := time.NewTicker(d)
-	storefrontIfttts := StorefrontIfttts{done: make(chan bool)}
+	storefrontIfttts := &StorefrontIfttts{done: make(chan bool)}
 
 	wg.Add(1)
 	go func() {
@@ -74,11 +65,13 @@ func initStoreFrontIfttts(wg *sync.WaitGroup) (*StorefrontIfttts, error) {
 					Log.Error().Msgf("Error fetching ifttts: %v", err)
 					continue
 				}
-				storefrontIfttts = newStorefrontIfttts
+				storefrontIfttts.mu.Lock()
+				storefrontIfttts.StoreIfttts = newStorefrontIfttts
+				storefrontIfttts.mu.Unlock()
 			}
 		}
 	}()
-	return &storefrontIfttts, nil
+	return storefrontIfttts, nil
 }
 
 func (si *StorefrontIfttts) Close() {
