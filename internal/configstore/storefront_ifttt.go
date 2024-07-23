@@ -54,7 +54,7 @@ func initStoreFrontIfttts(wg *sync.WaitGroup) (*StorefrontIfttts, error) {
 		defer wg.Done()
 		for {
 			select {
-			case <-(*storefrontIfttts).done:
+			case <-storefrontIfttts.done:
 				Log.Info().Msg("received done")
 				ticker.Stop()
 				return
@@ -65,9 +65,9 @@ func initStoreFrontIfttts(wg *sync.WaitGroup) (*StorefrontIfttts, error) {
 					Log.Error().Msgf("Error fetching ifttts: %v", err)
 					continue
 				}
-				(*storefrontIfttts).mu.Lock()
-				(*storefrontIfttts).StoreIfttts = newStorefrontIfttts
-				(*storefrontIfttts).mu.Unlock()
+				storefrontIfttts.mu.Lock()
+				storefrontIfttts.StoreIfttts = newStorefrontIfttts
+				storefrontIfttts.mu.Unlock()
 			}
 		}
 	}()
