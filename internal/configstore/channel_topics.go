@@ -90,12 +90,10 @@ func matchChannelState(newCT *ChannelTopics, currentCT *ChannelTopics) bool {
 
 var i int = 0
 
-func initChannelTopics(wg *sync.WaitGroup, tm *TopicMan) (*ChannelTopics, error) {
+func initChannelTopics(wg *sync.WaitGroup) (*ChannelTopics, error) {
 	d, _ := time.ParseDuration(viper.GetString("CONFIG_REFRESH_INTERVAL"))
 	ticker := time.NewTicker(d)
 	channelTopics := ChannelTopics{done: make(chan bool)}
-	currentCT := ChannelTopics{done: make(chan bool)}
-	currentCT.AttachTopicMan(tm)
 
 	wg.Add(1)
 	go func() {
@@ -108,8 +106,8 @@ func initChannelTopics(wg *sync.WaitGroup, tm *TopicMan) (*ChannelTopics, error)
 				return
 			case t := <-ticker.C:
 				Log.Debug().Msgf("ChannelTopics Refresh Tick at %v", t)
-				currentCT, _ = fetchChannelTopics(&currentCT)
-				Log.Debug().Msgf("ChannelTopics Refresh Tick at %+v", currentCT)
+				channelTopics, _ = fetchChannelTopics(&channelTopics)
+				Log.Debug().Msgf("ChannelTopics Refresh Tick at %+v", channelTopics)
 				//testing
 				top := "in.id.clyszkfc70002zpa9ooq25gq1-5lef-ldkv-sP2mEg.m.batch.t.events"
 				if i != 0 {
