@@ -45,11 +45,7 @@ type StorefrontIfttts struct {
 }
 
 func initStoreFrontIfttts(wg *sync.WaitGroup) (*StorefrontIfttts, error) {
-	d, err := time.ParseDuration(viper.GetString("CONFIG_REFRESH_INTERVAL"))
-	if err != nil {
-		Log.Error().Msgf("Error parsing CONFIG_REFRESH_INTERVAL: %v", err)
-		return nil, err
-	}
+	d, _ := time.ParseDuration(viper.GetString("CONFIG_REFRESH_INTERVAL"))
 	ticker := time.NewTicker(d)
 	storefrontIfttts := &StorefrontIfttts{done: make(chan bool)}
 
