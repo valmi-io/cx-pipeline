@@ -81,7 +81,7 @@ func matchChannelState(newCT *ChannelTopics, currentCT *ChannelTopics) bool {
 	}
 	for k, v := range currentCTmap {
 		if _, found := newCtMap[k]; !found {
-			Log.Info().Msgf("Un Subscribing to old Channel: %v", v.constructTopic())
+			Log.Info().Msgf("UnSubscribing to old Channel: %v", v.constructTopic())
 			currentCT.topicMan.UnsubscribeTopic(v.constructTopic()) //Unsubcrbe
 		}
 	}
