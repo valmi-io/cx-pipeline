@@ -39,16 +39,16 @@ func fetchChannelTopics(currentCT *ChannelTopics) []ChannelTopic {
 		Log.Info().Msg(err.Error())
 	}
 	// PARSE the response and store it in the ChannelTopics struct
-	var channelTopics []ChannelTopic
-	if err := json.Unmarshal([]byte(data), &channelTopics); err != nil {
+	var newChannelTopics []ChannelTopic
+	if err := json.Unmarshal([]byte(data), &newChannelTopics); err != nil {
 		Log.Error().Msgf("Error Unmarshalling JSON: %v", err)
 	}
 
 	// Pass to matchChannelState
-	if status := matchChannelState(channelTopics, currentCT.Channels, currentCT.topicMan); status {
-		return channelTopics
+	if status := matchChannelState(newChannelTopics, currentCT.Channels, currentCT.topicMan); status {
+		// if success, switch to NewChannelTopics
+		return newChannelTopics
 	}
-	// if success, switch to NewChannelTopics
 	return currentCT.Channels
 }
 
@@ -84,7 +84,7 @@ func matchChannelState(newCT []ChannelTopic, currentCT []ChannelTopic, topicMan 
 	return true
 }
 
-var i int = 0
+// var i int = 0
 
 func initChannelTopics(wg *sync.WaitGroup) (*ChannelTopics, error) {
 	d, _ := time.ParseDuration(viper.GetString("CONFIG_REFRESH_INTERVAL"))
