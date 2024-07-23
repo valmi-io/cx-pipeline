@@ -25,18 +25,17 @@ func main() {
 	Log.Info().Msg(viper.GetString("APP_BACKEND_URL"))
 	Log.Info().Msg(viper.GetString("KAFKA_BROKER"))
 
-	// initialize ConfigStore
-	cs, err := configstore.Init()
-	if err != nil {
-		Log.Fatal().Msg(err.Error())
-	}
-
 	// initialize Broker
 	topicMan, err := InitBroker(processor)
 	if err != nil {
 		Log.Fatal().Msg(err.Error())
 	}
 
+	// initialize ConfigStore
+	cs, err := configstore.Init(*topicMan)
+	if err != nil {
+		Log.Fatal().Msg(err.Error())
+	}
 	// Connect ConfigStore and Broker
 	cs.AttachTopicMan(topicMan)
 

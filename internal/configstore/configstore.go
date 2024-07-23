@@ -19,9 +19,9 @@ type ConfigStore struct {
 	wg               *sync.WaitGroup
 }
 
-func Init() (*ConfigStore, error) {
+func Init(tm TopicMan) (*ConfigStore, error) {
 	var wg sync.WaitGroup
-	channelTopics, error := initChannelTopics(&wg)
+	channelTopics, error := initChannelTopics(&wg, &tm)
 	if error != nil {
 		return nil, error
 	}
