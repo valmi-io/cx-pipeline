@@ -103,9 +103,9 @@ func initChannelTopics(wg *sync.WaitGroup) (*ChannelTopics, error) {
 			case t := <-ticker.C:
 				Log.Debug().Msgf("ChannelTopics Refresh Tick at %v", t)
 				newChannels := fetchChannelTopics(channelTopics)
-				channelTopics.mu.RLock()
+				channelTopics.mu.Lock()
 				channelTopics.Channels = newChannels
-				channelTopics.mu.RUnlock()
+				channelTopics.mu.Unlock()
 				Log.Debug().Msgf("ChannelTopics Refresh Tick at %+v", channelTopics)
 				//testing
 				// top := "in.id.clyszkfc70002zpa9ooq25gq1-5lef-ldkv-sP2mEg.m.batch.t.events"
