@@ -1,10 +1,3 @@
-/*
- * Copyright (c) 2024 valmi.io <https://github.com/valmi-io>
- *
- * Created Date: Wednesday, July 17th 2024, 6:11:58 pm
- * Author: Rajashekar Varkala @ valmi.io
- */
-
 package main
 
 import (
@@ -20,20 +13,20 @@ import (
 )
 
 func main() {
-	// initialize environment & config variables
+	Log.Info().Msgf("delivery agent started")
 	env.InitConfig()
 	Log.Info().Msg(viper.GetString("APP_BACKEND_URL"))
 	Log.Info().Msg(viper.GetString("KAFKA_BROKER"))
 
 	// initialize ConfigStore
-	jsonPayload := `{"channel_in": ["chatbox"], "channel_not_in": ["x", "y"]}`
+	jsonPayload := `{"channel_in": ["processor"], "channel_not_in": ["x", "y"]}`
 	cs, err := configstore.Init(jsonPayload)
 	if err != nil {
 		Log.Fatal().Msg(err.Error())
 	}
 
 	// initialize Broker
-	topicMan, err := InitBroker(processor)
+	topicMan, err := InitBroker(delivery)
 	if err != nil {
 		Log.Fatal().Msg(err.Error())
 	}
@@ -54,5 +47,4 @@ func main() {
 	Log.Info().Msg("Received an interrupt signal, shutting down...")
 	cs.Close()       // close ConfigStore to stop refreshing IFTTTs
 	topicMan.Close() // close broker topic management
-
 }

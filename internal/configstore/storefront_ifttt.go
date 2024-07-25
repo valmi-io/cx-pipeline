@@ -48,7 +48,6 @@ func initStoreFrontIfttts(wg *sync.WaitGroup) (*StorefrontIfttts, error) {
 	d, _ := time.ParseDuration(viper.GetString("CONFIG_REFRESH_INTERVAL"))
 	ticker := time.NewTicker(d)
 	storefrontIfttts := &StorefrontIfttts{done: make(chan bool)}
-
 	wg.Add(1)
 	go func() {
 		defer wg.Done()

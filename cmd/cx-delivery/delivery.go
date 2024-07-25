@@ -15,7 +15,7 @@ type ChannelTopic struct {
 	channel    string
 }
 
-func processor(msg string) {
+func delivery(msg string) {
 	Log.Info().Msgf("processing msg %v", msg)
 
 	var event map[string]interface{}
@@ -23,9 +23,8 @@ func processor(msg string) {
 		Log.Error().Msgf("Error Unmarshalling event: %v", unmarshalErr)
 		return
 	}
-	event["processed"] = true
 
-	jsonPayload := `{"channel_in": ["processor"], "channel_not_in": [""]}`
+	jsonPayload := `{"channel_in": ["postgres"], "channel_not_in": [""]}`
 	data, _, err := util.PostUrl(
 		viper.GetString("APP_BACKEND_URL")+"/api/v1/superuser/channeltopics",
 		[]byte(jsonPayload),
@@ -41,7 +40,7 @@ func processor(msg string) {
 		return
 	}
 
-	// TODO: send the msg to only particular store write_key(processor)
+	// TODO: send the msg to only particular store write_key(delivery)
 	for _, ct := range channelTopics {
 		headerItems := map[string]string{"Content-Type": "application/json", "X-Write-Key": ct.WriteKey}
 		eventBytes, _ := json.Marshal(event)
