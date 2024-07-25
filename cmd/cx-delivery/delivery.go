@@ -42,7 +42,6 @@ func delivery(msg string) {
 
 	for _, ct := range channelTopics {
 		headerItems := map[string]string{"Content-Type": "application/json", "X-Write-Key": ct.WriteKey}
-		Log.Info().Msgf("************************* making 3049 with %v", headerItems)
 		eventBytes, _ := json.Marshal(event)
 		_, _, err = util.PostUrl("http://localhost:3049/api/s/s2s/event", eventBytes, nil, headerItems)
 		if err != nil {
