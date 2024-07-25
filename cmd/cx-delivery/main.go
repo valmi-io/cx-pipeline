@@ -35,6 +35,8 @@ func Deliver() {
 		Log.Error().Msgf("Error Unmarshalling topicsToSubscribe by delivery agent")
 	}
 
+	// init topicMan, but topicMan needs processorFunc() :(
+
 	// get write keys for channel=postgres
 	jsonPayload = `{"channel_in": ["postgres"], "channel_not_in": [""]}`
 	data, _, err = util.PostUrl(
