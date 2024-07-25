@@ -41,6 +41,7 @@ func processor(msg string) {
 		return
 	}
 
+	// TODO: send the msg to only particular store write_key(processor)
 	for _, ct := range channelTopics {
 		headerItems := map[string]string{"Content-Type": "application/json", "X-Write-Key": ct.WriteKey}
 		eventBytes, _ := json.Marshal(event)
