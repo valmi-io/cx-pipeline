@@ -90,7 +90,6 @@ func initChannelTopics(wg *sync.WaitGroup, jsonPayload string) (*ChannelTopics, 
 	d, _ := time.ParseDuration(viper.GetString("CONFIG_REFRESH_INTERVAL"))
 	ticker := time.NewTicker(d)
 	channelTopics := &ChannelTopics{done: make(chan bool)}
-	firstTime := true
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
@@ -101,16 +100,12 @@ func initChannelTopics(wg *sync.WaitGroup, jsonPayload string) (*ChannelTopics, 
 				Log.Info().Msg("received done")
 				return
 			case t := <-ticker.C:
-				if !firstTime {
-					continue
-				}
 				Log.Debug().Msgf("ChannelTopics Refresh Tick at %v", t)
 				newChannels := fetchChannelTopics(channelTopics, jsonPayload)
 				channelTopics.mu.Lock()
 				channelTopics.Channels = newChannels
 				channelTopics.mu.Unlock()
 				Log.Debug().Msgf("ChannelTopics Refresh Tick at %+v", channelTopics)
-				firstTime = false
 				//testing
 				// top := "in.id.clyszkfc70002zpa9ooq25gq1-5lef-ldkv-sP2mEg.m.batch.t.events"
 				// if i != 0 {
