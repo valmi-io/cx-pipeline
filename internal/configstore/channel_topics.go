@@ -26,8 +26,7 @@ type ChannelTopics struct {
 	topicMan *TopicMan
 }
 
-func fetchChannelTopics(currentCT *ChannelTopics) []ChannelTopic {
-	jsonPayload := `{"channel_in": ["chatbox"], "channel_not_in": ["x", "y"]}`
+func fetchChannelTopics(currentCT *ChannelTopics, jsonPayload string) []ChannelTopic {
 	data, respCode, err := util.PostUrl(
 		viper.GetString("APP_BACKEND_URL")+"/api/v1/superuser/channeltopics",
 		[]byte(jsonPayload),
@@ -87,7 +86,7 @@ func matchChannelState(newCT []ChannelTopic, currentCT []ChannelTopic, topicMan 
 
 // var i int = 0
 
-func initChannelTopics(wg *sync.WaitGroup) (*ChannelTopics, error) {
+func initChannelTopics(wg *sync.WaitGroup, jsonPayload string) (*ChannelTopics, error) {
 	d, _ := time.ParseDuration(viper.GetString("CONFIG_REFRESH_INTERVAL"))
 	ticker := time.NewTicker(d)
 	channelTopics := &ChannelTopics{done: make(chan bool)}
@@ -106,7 +105,7 @@ func initChannelTopics(wg *sync.WaitGroup) (*ChannelTopics, error) {
 					continue
 				}
 				Log.Debug().Msgf("ChannelTopics Refresh Tick at %v", t)
-				newChannels := fetchChannelTopics(channelTopics)
+				newChannels := fetchChannelTopics(channelTopics, jsonPayload)
 				channelTopics.mu.Lock()
 				channelTopics.Channels = newChannels
 				channelTopics.mu.Unlock()

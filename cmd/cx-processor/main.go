@@ -26,7 +26,8 @@ func main() {
 	Log.Info().Msg(viper.GetString("KAFKA_BROKER"))
 
 	// initialize ConfigStore
-	cs, err := configstore.Init()
+	jsonPayload := `{"channel_in": ["chatbox"], "channel_not_in": ["x", "y"]}`
+	cs, err := configstore.Init(jsonPayload)
 	if err != nil {
 		Log.Fatal().Msg(err.Error())
 	}
