@@ -51,7 +51,7 @@ func GetUrl(url string, setAuth func(*http.Request)) (string, int, error) {
 
 }
 
-func PostUrl(url string, body []byte, setAuth func(*http.Request)) (string, int, error) {
+func PostUrl(url string, body []byte, setAuth func(*http.Request), headerItems map[string]string) (string, int, error) {
 	client := http.Client{Timeout: 5 * time.Second}
 
 	req, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(body))
@@ -62,6 +62,10 @@ func PostUrl(url string, body []byte, setAuth func(*http.Request)) (string, int,
 	}
 	if setAuth != nil {
 		setAuth(req)
+	}
+
+	for headerKey, headerValue := range headerItems {
+		req.Header.Set(headerKey, headerValue)
 	}
 
 	resp, err := client.Do(req)

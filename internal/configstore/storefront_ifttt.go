@@ -48,7 +48,7 @@ func initStoreFrontIfttts(wg *sync.WaitGroup) (*StorefrontIfttts, error) {
 	d, _ := time.ParseDuration(viper.GetString("CONFIG_REFRESH_INTERVAL"))
 	ticker := time.NewTicker(d)
 	storefrontIfttts := &StorefrontIfttts{done: make(chan bool)}
-
+	firstTime := true
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
@@ -59,6 +59,9 @@ func initStoreFrontIfttts(wg *sync.WaitGroup) (*StorefrontIfttts, error) {
 				ticker.Stop()
 				return
 			case t := <-ticker.C:
+				if !firstTime {
+					continue
+				}
 				Log.Debug().Msgf("StorefrontIfttts Refresh Tick at %v", t)
 				newStorefrontIfttts, err := fetchIfttts()
 				if err != nil {
@@ -68,6 +71,7 @@ func initStoreFrontIfttts(wg *sync.WaitGroup) (*StorefrontIfttts, error) {
 				storefrontIfttts.mu.Lock()
 				storefrontIfttts.StoreIfttts = newStorefrontIfttts
 				storefrontIfttts.mu.Unlock()
+				firstTime = false
 			}
 		}
 	}()
